@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<head>
+	<title>Office Theme</title>
+	<style type="text/css">
+		*{margin:0;padding:0;list-style:none;}
+		body{background:#0097d0 url(bg.jpg) repeat left top;font-family:verdana, sans-serif;font-size:12px;line-height:18px;color:#fff;}
+		a{color:#fff;text-decoration:underline;}
+		a:hover{color:#fff;}
+		.clear{clear:both;}
+		
+		#site{width:100%;background:url(water.jpg) repeat-x;}
+		#header{width:742px;height:303px;position:relative;left:16px;top:0;background:url(header.jpg) no-repeat;}
+		#title a{font-family:georgia, times, times new roman, serif;font-weight:normal;text-decoration:none;font-size:40px;line-height:40px;position:absolute;top:130px;left:570px;color:#0097d0;}
+		#description{font-family:georgia, times, times new roman, serif;font-style:italic;font-weight:normal;text-decoration:none;font-size:24px;line-height:24px;position:absolute;top:170px;left:570px;color:#555;}
+		
+		#hold{width:811px;}
+		
+		#content{margin:0 0 0 10px;position:relative;top:-50px;width:495px;float:left;}
+		.post{padding:10px 2px 20px 2px;border-bottom:1px solid #bab9a5;}
+		.post:hover{background:#00b6f7;}
+		.post h2 a, h2, h3, h1, h5, h4{text-decoration:none;color:#eaf4f6;font-size:24px;line-height:28px;font-family:georgia, times, times new roman, serif;font-weight:normal;}
+		.post small{color:#d8360f;font-size:10px;display:block;background:#64c4dc;padding:0 2px;}
+			.post small a{text-decoration:none;font-style:italic;color:#d8360f;}
+			
+		#subcontent{width:242px;float:right;}
+		#subcontent ul li{display:inline;}
+		#subcontent ul li a{display:block;padding:2px;text-decoration:none;border-bottom:1px solid #bab9a5;}
+		#subcontent ul li a:hover{background:#00b6f7;}
+	</style>
+</head>
+<body>
+	<div id="site">
+		<div id="header">&nbsp;</div>
+		<h1 id="title"><a href="<?php bloginfo('url'); ?>"><?php bloginfo('title'); ?></a></h1>
+		<h2 id="description"><?php bloginfo('description'); ?></h2>
+		
+		<div id="hold">
+		<div id="content">
+			<div class="post">
+				<h2><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
+				<small>Posted by <?php the_author(); ?> on <?php the_time('M d, Y'); ?></small>
+				<?php the_content('Read More'); ?>	
+			</div>
+			<div class="post">
+				<h2><a href="#">Post Title here</a></h2>
+				<small>Posted by Author on January 12, 2008</small>
+				Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi commodo, ipsum sed pharetra gravida, orci magna rhoncus neque, id pulvinar odio lorem non turpis. Nullam sit amet enim. Suspendisse id velit vitae ligula volutpat condimentum. Aliquam erat volutpat. Sed quis velit. Nulla facilisi. Nulla libero. Vivamus pharetra posuere sapien. Nam consectetuer. Sed aliquam, nunc eget euismod ullamcorper, lectus nunc ullamcorper orci, fermentum bibendum enim nibh eget ipsum. Donec porttitor ligula eu dolor. Maecenas vitae nulla consequat libero cursus venenatis.
+			</div>
+			<div class="post">
+				<h2><a href="#">Post Title here</a></h2>
+				<small>Posted by Author on January 12, 2008</small>
+				Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi commodo, ipsum sed pharetra gravida, orci magna rhoncus neque, id pulvinar odio lorem non turpis. Nullam sit amet enim. Suspendisse id velit vitae ligula volutpat condimentum. Aliquam erat volutpat. Sed quis velit. Nulla facilisi. Nulla libero. Vivamus pharetra posuere sapien. Nam consectetuer. Sed aliquam, nunc eget euismod ullamcorper, lectus nunc ullamcorper orci, fermentum bibendum enim nibh eget ipsum. Donec porttitor ligula eu dolor. Maecenas vitae nulla consequat libero cursus venenatis.
+			</div>
+		</div>
+		<div id="subcontent">
+			<h5>Pages</h5>
+			<ul>
+				<?php wp_list_pages('title_li='); ?>
+			</ul>
+			<h5>Categories</h5>
+			<ul>
+				<?php wp_list_categories('title_li='); ?>
+			</ul>
+			<br>
+			<h5>Archives</h5>
+			<ul>
+				<?php wp_get_archives('type=monthly'); ?>
+			</ul>
+		</div>
+		<div class="clear"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+/*  
+Theme Name: Organic Ocean
+Theme URI: http://wordpress.org/
+Description: The theme by <a href="http://www.veckd.com" title="veckd">veckd.com</a>
+Version: 1.0
+Author: Greg Ponchak
+Author URI: http://veckd.com/
+
+Enjoy the theme =D
+
+*/
+		*{margin:0;padding:0;list-style:none;}
+		body{background:#0097d0 url(bg.jpg) repeat left top;font-family:verdana, sans-serif;font-size:12px;line-height:18px;color:#fff;}
+		a{color:#fff;text-decoration:underline;}
+		a:hover{color:#fff;}
+		.clear{clear:both;}
+		
+		#site{width:100%;background:url(water.jpg) repeat-x;}
+		#header{width:742px;height:303px;position:relative;left:16px;top:0;background:url(header.jpg) no-repeat;}
+		#title a{font-family:georgia, times, times new roman, serif;font-weight:normal;text-decoration:none;font-size:40px;line-height:40px;position:absolute;top:130px;left:570px;color:#0097d0;}
+		#description{font-family:georgia, times, times new roman, serif;font-style:italic;font-weight:normal;text-decoration:none;font-size:24px;line-height:24px;position:absolute;top:170px;left:570px;color:#555;}
+		
+		#hold{width:811px;}
+		
+		#content{margin:0 0 0 10px;position:relative;top:-50px;width:495px;float:left;}
+		.post, .post2{padding:10px 2px 20px 2px;border-bottom:1px solid #bab9a5;}
+		.post:hover{}
+		.post h2 a, h2, h3, h1, h5, h4, .post2 h2 a{text-decoration:none;color:#eaf4f6;font-size:24px;line-height:28px;font-family:georgia, times, times new roman, serif;font-weight:normal;}
+		.post small, .post2 small{color:#d8360f;font-size:10px;display:block;background:#64c4dc;padding:0 2px;}
+			.post small a, .post2 small a{text-decoration:none;font-style:italic;color:#d8360f;}
+			
+		#subcontent{width:242px;float:right;}
+		#subcontent ul li{display:inline;}
+		#subcontent ul li a{display:block;padding:2px;text-decoration:none;border-bottom:1px solid #bab9a5;}
+		#subcontent ul li a:hover{background:#00b6f7;}
+
+.commentlist li{padding:10px;background:transparent;}
+.commentlist li.alt{background:#0097d0;}
