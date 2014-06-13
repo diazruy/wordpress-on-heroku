@@ -1,5 +1,9 @@
 <?php
 
+//if uninstall not called from WordPress exit
+if (!defined('WP_UNINSTALL_PLUGIN'))
+    exit();
+
 /*
  * manages Polylang uninstallation
  * the goal is to remove ALL Polylang related data in db
@@ -35,7 +39,7 @@ class PLL_Uninstall {
 	 */
 	function uninstall() {
 		// suppress data of the old model < 1.2
-		// FIXME: to remove in 1.3
+		// FIXME: to remove when support for v1.1.6 will be dropped
 		global $wpdb;
 		$wpdb->termmeta = $wpdb->prefix . 'termmeta'; // registers the termmeta table in wpdb
 
@@ -81,7 +85,7 @@ class PLL_Uninstall {
 			wp_delete_post($id, true);
 
 		// delete the strings translations (<1.2)
-		// FIXME: to remove in 1.3
+		// FIXME: to remove when support for v1.1.6 will be dropped
 		foreach ($languages as $lang)
 			delete_option('polylang_mo'.$lang->term_id);
 
@@ -120,6 +124,7 @@ class PLL_Uninstall {
 
 		//delete transients
 		delete_transient('pll_languages_list');
+		delete_transient('pll_upgrade_1_4');
 	}
 }
 

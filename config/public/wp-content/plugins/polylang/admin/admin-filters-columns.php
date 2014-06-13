@@ -7,20 +7,22 @@
  * @since 1.2
  */
 class PLL_Admin_Filters_Columns {
-	public $model;
+	public $links, $model, $curlang;
 
 	/*
 	 * constructor: setups filters and actions
 	 *
 	 * @since 1.2
 	 *
-	 * @param object $model instance of PLL_Model
+	 * @param object $polylang
 	 */
-	public function __construct(&$model) {
-		$this->model = &$model;
+	public function __construct(&$polylang) {
+		$this->links = &$polylang->links;
+		$this->model = &$polylang->model;
+		$this->curlang = &$polylang->curlang;
 
 		// add the language and translations columns in 'All Posts', 'All Pages' and 'Media library' panels
-		foreach ($this->model->post_types as $type) {
+		foreach ($this->model->get_translated_post_types() as $type) {
 			// use the latest filter late as some plugins purely overwrite what's done by others :(
 			// specific case for media
 			add_filter('manage_'. ($type == 'attachment' ? 'upload' : 'edit-'. $type) .'_columns', array(&$this, 'add_post_column'), 100);
@@ -32,7 +34,7 @@ class PLL_Admin_Filters_Columns {
 		add_filter('bulk_edit_custom_box', array(&$this, 'quick_edit_custom_box'), 10, 2);
 
 		// adds the language column in the 'Categories' and 'Post Tags' tables
-		foreach ($this->model->taxonomies as $tax) {
+		foreach ($this->model->get_translated_taxonomies() as $tax) {
 			add_filter('manage_edit-'.$tax.'_columns', array(&$this, 'add_term_column'));
 			add_action('manage_'.$tax.'_custom_column', array(&$this, 'term_column'), 10, 3);
 		}
@@ -56,7 +58,7 @@ class PLL_Admin_Filters_Columns {
 
 		foreach ($this->model->get_languages_list() as $language) {
 			// don't add the column for the filtered language
-			if ($language->slug != get_user_meta(get_current_user_id(), 'pll_filter_content', true))
+			if (empty($this->curlang) || $language->slug != $this->curlang->slug)
 				$columns['language_'.$language->slug] = $language->flag ? $language->flag : esc_html($language->slug);
 		}
 
@@ -72,7 +74,7 @@ class PLL_Admin_Filters_Columns {
 	 */
 	protected function get_first_language_column() {
 		foreach ($this->model->get_languages_list() as $language) {
-			if ($language->slug != get_user_meta(get_current_user_id(), 'pll_filter_content', true))
+			if (empty($this->curlang) || $language->slug != $this->curlang->slug)
 				$columns[] = 'language_'.$language->slug;
 		}
 
@@ -108,7 +110,6 @@ class PLL_Admin_Filters_Columns {
 		if (false === strpos($column, 'language_') || !$lang)
 			return;
 
-		$post_type = isset($GLOBALS['post_type']) ? $GLOBALS['post_type'] : $_POST['post_type']; // 2nd case for quick edit
 		$language = $this->model->get_language(substr($column, 9));
 
 		// hidden field containing the post language for quick edit
@@ -129,10 +130,7 @@ class PLL_Admin_Filters_Columns {
 		else {
 			printf('<a class="pll_icon_add" title="%1$s" href="%2$s"></a>',
 				__('Add new translation', 'polylang'),
-				esc_url(admin_url('manage_media_custom_column' == current_filter() ?
-					'admin.php?action=translate_media&from_media=' . $post_id . '&new_lang=' . $language->slug :
-					'post-new.php?post_type=' . $post_type . '&from_post=' . $post_id . '&new_lang=' . $language->slug
-				))
+				esc_url($this->links->get_new_post_translation_link($post_id, $language))
 			);
 		}
 	}
@@ -217,15 +215,9 @@ class PLL_Admin_Filters_Columns {
 
 		// link to add a new translation
 		else {
-			$args = array(
-				'taxonomy'  => $taxonomy,
-				'post_type' => $post_type,
-				'from_tag'  => $term_id,
-				'new_lang'  => $language->slug
-			);
 			printf('<a class="pll_icon_add" title="%1$s" href="%2$s"></a>',
 				__('Add new translation', 'polylang'),
-				esc_url(add_query_arg($args, admin_url('edit-tags.php')))
+				esc_url($this->links->get_new_term_translation_link($term_id, $taxonomy, $post_type, $language))
 			);
 		}
 	}

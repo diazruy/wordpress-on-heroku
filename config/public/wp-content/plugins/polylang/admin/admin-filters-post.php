@@ -5,21 +5,20 @@
  *
  * @since 1.2
  */
-class PLL_Admin_Filters_Post {
-	public $model, $options, $pref_lang;
+class PLL_Admin_Filters_Post extends PLL_Admin_Filters_Post_Base {
+	public $options, $curlang;
 
 	/*
 	 * constructor: setups filters and actions
 	 *
 	 * @since 1.2
 	 *
-	 * @param object $model instance of PLL_Model
-	 * @param object $pref_lang language chosen in admin filter or default language
+	 * @param object $polylang
 	 */
-	public function __construct(&$model, $pref_lang) {
-		$this->model = &$model;
-		$this->options = &$model->options;
-		$this->pref_lang = $pref_lang;
+	public function __construct(&$polylang) {
+		parent::__construct($polylang);
+		$this->options = &$polylang->options;
+		$this->curlang = &$polylang->curlang;
 
 		// filters posts, pages and media by language
 		add_filter('parse_query',array(&$this,'parse_query'));
@@ -29,6 +28,7 @@ class PLL_Admin_Filters_Post {
 
 		// ajax response for changing the language in the post metabox
 		add_action('wp_ajax_post_lang_choice', array(&$this,'post_lang_choice'));
+		add_action('wp_ajax_pll_posts_not_translated', array(&$this,'ajax_posts_not_translated'));
 
 		// adds actions and filters related to languages when creating, saving or deleting posts and pages
 		add_action('save_post', array(&$this, 'save_post'), 21, 2); // priority 21 to come after advanced custom fields (20) and before the event calendar which breaks everything after 25
@@ -51,21 +51,21 @@ class PLL_Admin_Filters_Post {
 		$qvars = &$query->query_vars;
 
 		// do not filter post types such as nav_menu_item
-		if (isset($qvars['post_type']) && !in_array($qvars['post_type'], $this->model->post_types)) {
+		if (isset($qvars['post_type']) && !$this->model->is_translated_post_type($qvars['post_type'])) {
 			unset ($qvars['lang']);
 			return;
 		}
 
-		// filters the list of media by language when uploading from post
-		if ($this->options['media_support'] && ($GLOBALS['pagenow'] == 'media-upload.php' || // backward compatibility WP < 3.5
-			($GLOBALS['pagenow'] == 'admin-ajax.php' && isset($_REQUEST['action']) && $_REQUEST['action'] == 'query-attachments')) && // WP 3.5+
-			isset($_REQUEST['post_id']) && $lang = $this->model->get_post_language($_REQUEST['post_id']))
-			$query->set('lang', $lang->slug);
+		if (isset($qvars['post_type']) && !isset($qvars['lang'])) {
+			// filters the list of media (or wp-links) by language when uploading from post
+			if (isset($_REQUEST['pll_post_id']) && $lang = $this->model->get_post_language($_REQUEST['pll_post_id']))
+				$query->set('lang', $lang->slug);
 
-		if (isset($qvars['post_type']) && in_array($qvars['post_type'], $this->model->post_types) && !isset($qvars['lang']) && $lg = get_user_meta(get_current_user_id(), 'pll_filter_content', true))
-			$qvars['lang'] = $lg;
+			elseif (!empty($this->curlang))
+				$qvars['lang'] = $this->curlang->slug;
+		}
 
-		if ((isset($qvars['post_type']) && !in_array($qvars['post_type'], $this->model->post_types)) || (isset($qvars['lang']) && $qvars['lang'] == 'all'))
+		if (isset($qvars['lang']) && 'all' === $qvars['lang'])
 			unset ($qvars['lang']);
 	}
 
@@ -77,17 +77,8 @@ class PLL_Admin_Filters_Post {
 	 * @param string $post_type
 	 */
 	public function add_meta_boxes($post_type) {
-		if (in_array($post_type, $this->model->post_types))
+		if ($this->model->is_translated_post_type($post_type))
 			add_meta_box('ml_box', __('Languages','polylang'), array(&$this, 'post_language'), $post_type, 'side', 'high');
-
-		// replace tag metabox by our own
-		foreach (get_object_taxonomies($post_type) as $tax_name) {
-			$taxonomy = get_taxonomy($tax_name);
-			if ($taxonomy->show_ui && !is_taxonomy_hierarchical($tax_name)) {
-				remove_meta_box('tagsdiv-' . $tax_name, null, 'side');
-				add_meta_box('pll-tagsdiv-' . $tax_name, $taxonomy->labels->name, 'post_tags_meta_box', null, 'side', 'core', array('taxonomy' => $tax_name));
-			}
-		}
 	}
 
 	/*
@@ -106,10 +97,12 @@ class PLL_Admin_Filters_Post {
 
 		$dropdown = new PLL_Walker_Dropdown();
 
+		wp_nonce_field('pll_language', '_pll_nonce');
+
 		// NOTE: the class "tags-input" allows to include the field in the autosave $_POST (see autosave.js)
 		printf('
-			<p><em>%s</em></p>
-			<p>%s<br /></p>
+			<p><strong>%s</strong></p>
+			%s
 			<div id="post-translations" class="translations">',
 			__('Language', 'polylang'),
 			$dropdown->walk($this->model->get_languages_list(), array(
@@ -129,10 +122,16 @@ class PLL_Admin_Filters_Post {
 	 * @since 0.2
 	 */
 	public function post_lang_choice() {
+		check_ajax_referer('pll_language', '_pll_nonce');
+
 		global $post_ID; // obliged to use the global variable for wp_popular_terms_checklist
 		$post_ID = $_POST['post_id'];
 		$post_type = get_post_type($post_ID);
 		$lang = $this->model->get_language($_POST['lang']);
+
+		$post_type_object = get_post_type_object($post_type);
+		if (!current_user_can($post_type_object->cap->edit_posts) || !current_user_can($post_type_object->cap->create_posts))
+			wp_die(-1);
 
 		$this->model->set_post_language($post_ID, $lang); // save language, useful to set the language when uploading media from post
 
@@ -186,63 +185,102 @@ class PLL_Admin_Filters_Post {
 	}
 
 	/*
-	 * called when a post (or page) is saved, published or updated
-	 * saves languages and translations
+	 * ajax response for input in translation autocomplete input box
+	 *
+	 * @since 1.5
+	 */
+	public function ajax_posts_not_translated() {
+		check_ajax_referer('pll_language', '_pll_nonce');
+
+		$posts = get_posts(array(
+			's'                => $_REQUEST['term'],
+			'suppress_filters' => 0, // to make the post_fields filter work
+			'lang'             => 0, // avoid admin language filter
+			'numberposts'      => 10, // limit to 10 posts
+			'post_status'      => 'any',
+			'post_type'        => $_REQUEST['post_type'],
+			'orderby'          => 'title',
+			'order'            => 'ASC',
+			'tax_query'        => array(array(
+				'taxonomy' => 'language',
+				'field'    => 'term_taxonomy_id', // WP 3.5+
+				'terms'    => $this->model->get_language($_REQUEST['translation_language'])->term_taxonomy_id
+			))
+		));
+
+		$return = array();
+
+		foreach ($posts as $key => $post) {
+			if (!$this->model->get_translation('post', $post->ID, $_REQUEST['post_language']))
+				$return[] = array('id' => $post->ID, 'value' => $post->post_title, 'link' => $this->edit_translation_link($post->ID));
+		}
+
+		// add current translation in list
+		if ($post_id = $this->model->get_translation('post', $_REQUEST['pll_post_id'],$_REQUEST['translation_language'])) {
+			$post = get_post($post_id);
+			array_unshift($return, array(
+				'id' => $post_id,
+				'value' => $post->post_title,
+				'link' => $this->edit_translation_link($post_id)
+			));
+		}
+
+		wp_die(json_encode($return));
+	}
+
+	/*
+	 * saves language
 	 * checks the terms saved are in the right language
 	 *
-	 * @since 0.1
+	 * @since 1.5
 	 *
 	 * @param int $post_id
-	 * @param object $post
+	 * @param array $post
 	 */
-	public function save_post($post_id, $post) {
-		// does nothing except on post types which are filterable
-		if (!in_array($post->post_type, $this->model->post_types))
-			return;
+	protected function save_language($post_id, $post) {
+		// security checks are necessary to accept language modifications
+		// as 'wp_insert_post' can be called from outside WP admin
 
-		// bulk edit does not modify the language
-		if (isset($_GET['bulk_edit']) && $_REQUEST['inline_lang_choice'] == -1)
-			return;
-
-		if ($id = wp_is_post_revision($post_id))
-			$post_id = $id;
-
-		// save language
-		if (isset($_REQUEST['post_lang_choice']))
+		// edit post
+		if (isset($_REQUEST['post_lang_choice'])) {
+			check_admin_referer('pll_language', '_pll_nonce');
 			$this->model->set_post_language($post_id, $lang = $_REQUEST['post_lang_choice']);
+		}
 
+		// quick edit and bulk edit
 		elseif (isset($_REQUEST['inline_lang_choice'])) {
+			// bulk edit does not modify the language
+			if (isset($_REQUEST['bulk_edit']) && $_REQUEST['inline_lang_choice'] == -1)
+				continue;
+
+			isset($_REQUEST['bulk_edit']) ? check_admin_referer('bulk-posts') : check_admin_referer('inlineeditnonce', '_inline_edit');
+
 			if (($old_lang = $this->model->get_post_language($post_id)) && $old_lang->slug != $_REQUEST['inline_lang_choice'])
 				$this->model->delete_translation('post', $post_id);
 			$this->model->set_post_language($post_id, $lang = $_REQUEST['inline_lang_choice']);
 		}
 
-		elseif (isset($_GET['new_lang']))
-			$this->model->set_post_language($post_id, $_GET['new_lang']);
-
-		elseif (isset($_REQUEST['action']) && in_array($_REQUEST['action'], array('post-quickpress-save', 'post-quickpress-publish')))
-			$this->model->set_post_language($post_id, $this->pref_lang); // default language for QuickPress
-
-		elseif ($this->model->get_post_language($post_id))
-			{} // avoids breaking the language if post is updated outside the edit post page (thanks to Gonçalo Peres)
-
-		elseif (($parent_id = wp_get_post_parent_id($post_id)) && $parent_lang = $this->model->get_post_language($parent_id))
-			$this->model->set_post_language($post_id, $parent_lang);
+		// quick press
+		// 'post-quickpress-save', 'post-quickpress-publish' = backward compatibility WP < 3.8
+		elseif (isset($_REQUEST['action']) && in_array($_REQUEST['action'], array('post-quickpress-save', 'post-quickpress-publish', 'post-quickdraft-save'))) {
+			check_admin_referer('add-' . $post->post_type);
+			$this->model->set_post_language($post_id, $this->pref_lang); // default language for Quick draft
+		}
 
 		else
-			$this->model->set_post_language($post_id, $this->pref_lang);
+			$this->set_default_language($post_id);
 
 		// make sure we get save terms in the right language (especially tags with same name in different languages)
 		if (!empty($lang)) {
-			// FIXME quite a lot of query in foreach
-			foreach ($this->model->taxonomies as $tax) {
+			// FIXME quite a lot of queries in foreach
+			foreach ($this->model->get_translated_taxonomies() as $tax) {
 				$terms = get_the_terms($post_id, $tax);
 
 				if (is_array($terms)) {
 					$newterms = array();
 					foreach ($terms as $term) {
-						if ($newterm = $this->model->get_term_by('name', $term->name, $tax, $lang))
-							$newterms[] = (int) $newterm->term_id; // cast is important otherwise we get 'numeric' tags
+						if ($newterm = $this->model->term_exists($term->name, $tax, $term->parent, $lang))
+							$newterms[] = (int) $newterm; // cast is important otherwise we get 'numeric' tags
 
 						elseif (!is_wp_error($term_info = wp_insert_term($term->name, $tax))) // create the term in the correct language
 							$newterms[] = (int) $term_info['term_id'];
@@ -252,21 +290,37 @@ class PLL_Admin_Filters_Post {
 				}
 			}
 		}
+	}
 
-		if (!isset($_POST['post_tr_lang'])) // just in case only one language has been created
+	/*
+	 * called when a post (or page) is saved, published or updated
+	 * saves languages and translations
+	 *
+	 * @since 0.1
+	 *
+	 * @param int $post_id
+	 * @param object $post
+	 */
+	public function save_post($post_id, $post) {
+		// does nothing except on post types which are filterable
+		if (!$this->model->is_translated_post_type($post->post_type))
 			return;
 
-		// save translations after checking the translated post is in the right language
-		foreach ($_POST['post_tr_lang'] as $lang => $tr_id)
-			$translations[$lang] = ($tr_id && $this->model->get_post_language((int) $tr_id)->slug == $lang) ? (int) $tr_id : 0;
+		// capability check
+		// as 'wp_insert_post' can be called from outside WP admin
+		$post_type_object = get_post_type_object($post->post_type);
+		if (!current_user_can($post_type_object->cap->edit_posts) || !current_user_can($post_type_object->cap->create_posts))
+			wp_die( __( 'Cheatin&#8217; uh?' ) );
 
-		$this->model->save_translations('post', $post_id, $translations);
+		if ($id = wp_is_post_revision($post_id))
+			$post_id = $id;
 
-		// refresh language cache when a static front page has been translated
-		if (($pof = get_option('page_on_front')) && in_array($pof, $translations))
-			$this->model->clean_languages_cache();
+		$this->save_language($post_id, $post);
 
-		do_action('pll_save_post', $post_id, $post, $translations);
+		if (isset($_POST['post_tr_lang']))
+			$translations = $this->save_translations($post_id, $_POST['post_tr_lang']);
+
+		do_action('pll_save_post', $post_id, $post, empty($translations) ? $this->model->get_translations('post', $post_id) : $translations);
 	}
 
 	/*
@@ -293,12 +347,26 @@ class PLL_Admin_Filters_Post {
 	 * @return array modified arguments
 	 */
 	public function page_attributes_dropdown_pages_args($dropdown_args, $post) {
-		$lang = isset($_POST['lang']) ? $this->model->get_language($_POST['lang']) : $this->model->get_post_language($post->ID); // ajax or not ?
-		if (!$lang)
-			$lang = $this->pref_lang;
+		$dropdown_args['lang'] = isset($_POST['lang']) ? $this->model->get_language($_POST['lang']) : $this->model->get_post_language($post->ID); // ajax or not ?
+		if (!$dropdown_args['lang'])
+			$dropdown_args['lang'] = $this->pref_lang;
 
-		$pages = implode(',', pll_exclude_pages($lang));
-		$dropdown_args['exclude'] = isset($dropdown_args['exclude']) ? $dropdown_args['exclude'] . ',' . $pages : $pages;
 		return $dropdown_args;
+	}
+
+	/*
+	 * returns html markup for a translation link
+	 *
+	 * @since 1.4
+	 *
+	 * @param int $post_id translation post id
+	 * @return string
+	 */
+	public function edit_translation_link($post_id) {
+		return sprintf(
+			'<a href="%1$s" class="pll_icon_edit" title="%2$s"></a>',
+			esc_url(get_edit_post_link($post_id)),
+			__('Edit', 'polylang')
+		);
 	}
 }

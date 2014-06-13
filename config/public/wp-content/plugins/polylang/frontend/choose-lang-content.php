@@ -13,10 +13,10 @@ class PLL_Choose_Lang_Content extends PLL_Choose_lang {
 	 *
 	 * @since 1.2
 	 *
-	 * @param object $links instance of PLL_Frontend_Links
+	 * @param object $polylang
 	 */
-	public function __construct(&$links) {
-		parent::__construct($links);
+	public function __construct(&$polylang) {
+		parent::__construct($polylang);
 
 		if (!did_action('pll_language_defined')) {
 			// set the languages from content
@@ -59,8 +59,8 @@ class PLL_Choose_Lang_Content extends PLL_Choose_lang {
 		elseif ((is_single() || is_page() || (is_attachment() && $this->options['media_support'])) && ( ($var = get_queried_object_id()) || ($var = get_query_var('p')) || ($var = get_query_var('page_id')) || ($var = get_query_var('attachment_id')) ))
 			$lang = $this->model->get_post_language($var);
 
-		elseif (isset($this->model->taxonomies)) {
-			foreach ($this->model->taxonomies as $taxonomy) {
+		else {
+			foreach ($this->model->get_translated_taxonomies() as $taxonomy) {
 				if ($var = get_query_var(get_taxonomy($taxonomy)->query_var))
 					$lang = $this->model->get_term_language($var, $taxonomy);
 			}

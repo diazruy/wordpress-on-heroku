@@ -6,23 +6,26 @@
  * @since 1.2
  */
 class PLL_Frontend_Links extends PLL_Links {
-	public $curlang, $home, $using_permalinks, $page_on_front, $page_for_posts;
+	public $curlang, $home, $using_permalinks, $page_on_front = 0, $page_for_posts = 0;
 
 	/*
 	 * constructor
 	 *
 	 * @since 1.2
 	 *
-	 * @param object $links_model
+	 * @param object $polylang
 	 */
-	public function __construct(&$links_model) {
-		parent::__construct($links_model);
+	public function __construct(&$polylang) {
+		parent::__construct($polylang);
 
 		$this->using_permalinks = (bool) get_option('permalink_structure'); // are we using permalinks?
 
 		$this->home = get_option('home');
-		$this->page_on_front = get_option('page_on_front');
-		$this->page_for_posts = get_option('page_for_posts');
+
+		if ('page' == get_option('show_on_front')) {
+			$this->page_on_front = get_option('page_on_front');
+			$this->page_for_posts = get_option('page_for_posts');
+		}
 
 		add_action('pll_language_defined', array(&$this, 'pll_language_defined'), 10, 2);
 	}
@@ -43,6 +46,9 @@ class PLL_Frontend_Links extends PLL_Links {
 		foreach (array('feed_link', 'author_link', 'post_type_archive_link', 'year_link', 'month_link', 'day_link') as $filter)
 			add_filter($filter, array(&$this, 'archive_link'), 20);
 
+		// rewrites post format links
+		add_filter('term_link', array(&$this, 'term_link'), 20, 3);
+
 		// modifies the page link in case the front page is not in the default language
 		add_filter('page_link', array(&$this, 'page_link'), 20, 2);
 
@@ -55,6 +61,15 @@ class PLL_Frontend_Links extends PLL_Links {
 		// modifies the home url
 		if (!defined('PLL_FILTER_HOME_URL') || PLL_FILTER_HOME_URL)
 			add_filter('home_url', array(&$this, 'home_url'), 10, 2);
+
+		if ($this->options['force_lang'] > 1) {
+			// rewrites next and previous post links when not automatically done by WordPress
+			add_filter('get_pagenum_link', array(&$this, 'archive_link'), 20);
+
+			// rewrites ajax url
+			add_filter('admin_url', array(&$this, 'admin_url'), 10, 2);
+		}
+
 	}
 
 	/*
@@ -80,11 +95,11 @@ class PLL_Frontend_Links extends PLL_Links {
 	 * @return string modified link
 	 */
 	public function term_link($link, $term, $tax) {
-		if (isset($this->links[$link]))
-			return $this->links[$link];
+		if (isset($this->_links[$link]))
+			return $this->_links[$link];
 
-		return $this->links[$link] = $tax == 'post_format' ?
-			$this->links_model->add_language_to_link($link, $this->model->get_term_language($term->term_id)) : parent::term_link($link, $term, $tax);
+		return $this->_links[$link] = $tax == 'post_format' ? $this->links_model->add_language_to_link($link, $this->curlang) :
+			($this->options['force_lang'] ? parent::term_link($link, $term, $tax) : $link);
 	}
 
 	/*
@@ -100,7 +115,7 @@ class PLL_Frontend_Links extends PLL_Links {
 		if ($this->page_on_front && ($lang = $this->model->get_post_language($id)) && $id == $this->model->get_post($this->page_on_front, $lang))
 			return $lang->home_url;
 
-		return _get_page_link($id);
+		return $link;
 	}
 
 	/*
@@ -133,8 +148,9 @@ class PLL_Frontend_Links extends PLL_Links {
 	 */
 	public function redirect_canonical($redirect_url, $requested_url) {
 		global $wp_query;
-		if (is_page() && !is_feed() && isset($wp_query->queried_object) && 'page' == get_option('show_on_front') && $wp_query->queried_object->ID == get_option('page_on_front'))
-			return $this->options['redirect_lang'] ? $this->get_home_url() : false;
+		if (is_page() && !is_feed() && isset($wp_query->queried_object) && 'page' == get_option('show_on_front') && $wp_query->queried_object->ID == get_option('page_on_front')) {
+			return is_paged() ? $this->links_model->add_paged_to_link($this->get_home_url(), $wp_query->query_vars['page']) : $this->get_home_url();
+		}
 		return $redirect_url;
 	}
 
@@ -151,15 +167,22 @@ class PLL_Frontend_Links extends PLL_Links {
 		if (!(did_action('template_redirect') || did_action('login_init')) || rtrim($url,'/') != $this->home)
 			return $url;
 
-		$white_list = apply_filters('pll_home_url_white_list',  array(
-			array('file' => get_theme_root()),
-			array('function' => 'wp_nav_menu'),
-			array('function' => 'login_footer')
-		));
+		static $white_list, $black_list; // avoid evaluating this at each function call
 
-		$black_list = apply_filters('pll_home_url_black_list',  array(array('function' => 'get_search_form')));
+		if (empty($white_list)) {
+			$white_list = apply_filters('pll_home_url_white_list',  array(
+				array('file' => get_theme_root()),
+				array('function' => 'wp_nav_menu'),
+				array('function' => 'login_footer')
+			));
+		}
 
-		foreach (array_reverse(debug_backtrace(/*!DEBUG_BACKTRACE_PROVIDE_OBJECT|DEBUG_BACKTRACE_IGNORE_ARGS*/)) as $trace) {
+		if (empty($black_list))
+			$black_list = apply_filters('pll_home_url_black_list',  array(array('function' => 'get_search_form')));
+
+		$traces = version_compare(PHP_VERSION, '5.2.5', '>=') ? debug_backtrace(false) : debug_backtrace();
+
+		foreach ($traces as $trace) {
 			// searchform.php is not passed through get_search_form filter prior to WP 3.6
 			// backward compatibility WP < 3.6
 			if (isset($trace['file']) && strpos($trace['file'], 'searchform.php'))
@@ -181,6 +204,25 @@ class PLL_Frontend_Links extends PLL_Links {
 	}
 
 	/*
+	 * checks if the current user can read the post
+	 *
+	 * @since 1.5
+	 *
+	 * @param int $post_id
+	 * @return bool
+	 */
+	public function current_user_can_read($post_id) {
+		$post = get_post($post_id);
+		if (in_array($post->post_status, get_post_stati(array('public' => true))))
+			return true;
+
+		$post_type_object = get_post_type_object($post->post_type);
+		$user = wp_get_current_user();
+		return is_user_logged_in() && (current_user_can($post_type_object->cap->read_private_posts) || $user->ID == $post->post_author);
+	}
+
+
+	/*
 	 * returns the url of the translation (if exists) of the current page
 	 *
 	 * @since 0.1
@@ -195,19 +237,19 @@ class PLL_Frontend_Links extends PLL_Links {
 			return $translation_url[$language->slug];
 
 		global $wp_query;
-		$qv = $wp_query->query;
+		$qv = $wp_query->query_vars;
 		$hide = $this->options['default_lang'] == $language->slug && $this->options['hide_default'];
 
 		// post and attachment
-		if (is_single() && ($this->options['media_support'] || !is_attachment()) && $id = $this->model->get_post($wp_query->queried_object_id, $language))
+		if (is_single() && ($this->options['media_support'] || !is_attachment()) && ($id = $this->model->get_post($wp_query->queried_object_id, $language)) && $this->current_user_can_read($id))
 			$url = get_permalink($id);
 
 		// page for posts
-		// FIXME the last test should useless now since I test is_posts_page
+		// FIXME the last test should be useless now since I test is_posts_page
 		elseif ($wp_query->is_posts_page && !empty($wp_query->queried_object_id) && ($id = $this->model->get_post($wp_query->queried_object_id, $language)) && $id == $this->model->get_post($this->page_for_posts, $language))
 			$url = get_permalink($id);
 
-		elseif (is_page() && $id = $this->model->get_post($wp_query->queried_object_id, $language))
+		elseif (is_page() && ($id = $this->model->get_post($wp_query->queried_object_id, $language)) && $this->current_user_can_read($id))
 			$url = $hide && $id == $this->model->get_post($this->page_on_front, $language) ? $this->home : get_page_link($id);
 
 		elseif (!is_tax('post_format') && !is_tax('language') && (is_category() || is_tag() || is_tax()) ) {
@@ -216,15 +258,19 @@ class PLL_Frontend_Links extends PLL_Links {
 
 			if (!$lang || $language->slug == $lang->slug)
 				$url = get_term_link($term, $term->taxonomy); // self link
-			elseif ($link_id = $this->model->get_translation('term', $term->term_id, $language))
-				$url = get_term_link(get_term($link_id, $term->taxonomy), $term->taxonomy);
+			elseif ($tr_id = $this->model->get_translation('term', $term->term_id, $language)) {
+				$tr_term = get_term($tr_id, $term->taxonomy);
+				// check if translated term (or children) have posts
+				if ($tr_term && ($tr_term->count || (is_taxonomy_hierarchical($term->taxonomy) && array_sum(wp_list_pluck(get_terms($term->taxonomy, array('child_of' => $tr_term->term_id, 'lang' => $language->slug)), 'count')))))
+					$url = get_term_link($tr_term, $term->taxonomy);
+			}
 		}
 
 		elseif (is_search())
 			$url = $this->get_archive_url($language);
 
 		elseif (is_archive()) {
-			$keys = array('post_type', 'm', 'year', 'monthnum', 'day', 'author', 'author_name');
+			$keys = array('post_type', 'm', 'year', 'monthnum', 'day', 'author', 'author_name', 'post_format');
 			// check if there are existing translations before creating the url
 			if ($this->model->count_posts($language, array_intersect_key($qv, array_flip($keys))))
 				$url = $this->get_archive_url($language);
@@ -247,8 +293,7 @@ class PLL_Frontend_Links extends PLL_Links {
 	 */
 	public function get_archive_url($language) {
 		$url = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-		$url = $this->links_model->remove_language_from_link($url);
-		$url = $this->links_model->add_language_to_link($url, $language);
+		$url = $this->links_model->switch_language_in_link($url, $language);
 		return $this->links_model->remove_paged_from_link($url);
 	}
 
@@ -265,5 +310,18 @@ class PLL_Frontend_Links extends PLL_Links {
 			$language = $this->curlang;
 
 		return parent::get_home_url($language, $is_search);
+	}
+
+	/*
+	 * rewrites ajax url when using domains or subdomains
+	 *
+	 * @since 1.5
+	 *
+	 * @param string $url admin url with path evaluated by WordPress
+	 * @param string $path admin path
+	 * @return string
+	 */
+	public function admin_url($url, $path) {
+		return 'admin-ajax.php' === $path ? $this->links_model->switch_language_in_link($url, $this->curlang) : $url;
 	}
 }

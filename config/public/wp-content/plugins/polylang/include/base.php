@@ -39,6 +39,20 @@ abstract class PLL_Base {
 			unregister_widget('WP_Widget_Calendar');
 			register_widget('PLL_Widget_Calendar');
 		}
+
+		// overwrites the recent posts and recent comments widget to use a language dependant cache key
+		// useful only if using a cache plugin
+		if (defined('WP_CACHE') && WP_CACHE) {
+			if (!defined('PLL_WIDGET_RECENT_POSTS') || PLL_WIDGET_RECENT_POSTS) {
+				unregister_widget('WP_Widget_Recent_Posts');
+				register_widget('PLL_Widget_Recent_Posts');
+			}
+
+			if (!defined('PLL_WIDGET_RECENT_COMMENTS') || PLL_WIDGET_RECENT_COMMENTS) {
+				unregister_widget('WP_Widget_Recent_Comments');
+				register_widget('PLL_Widget_Recent_Comments');
+			}
+		}
 	}
 
 	/*
@@ -78,44 +92,4 @@ abstract class PLL_Base {
 		$debug = debug_backtrace();
 		trigger_error(sprintf('Call to undefined function $polylang->%1$s() in %2$s on line %3$s' . "\nError handler", $func, $debug[0]['file'], $debug[0]['line']), E_USER_ERROR);
 	}
-}
-
-/*
- * helpers functions
- */
-
-
-/*
- * returns all page ids *not in* language defined by $lang_id
- * works for all translated hierarchical post types
- *
- * @since 1.2
- *
- * @param object $lang language object
- * @return array list of page ids to exclude
- */
-function pll_exclude_pages($lang) {
-	global $polylang;
-
-	$args = array(
-		'lang' => 0, // so this query is not filtered by our pre_get_post filter in PLL_Frontend_Filters
-		'numberposts' => -1,
-		'nopaging'    => true,
-		'post_type'   => array_intersect(get_post_types(array('hierarchical' => 1)), $polylang->model->post_types),
-		'fields'      => 'ids',
-		'tax_query'   => array(array(
-			'taxonomy' => 'language',
-			'field'    => 'term_taxonomy_id', // since WP 3.5
-			'terms'    => $lang->term_taxonomy_id,
-			'operator' => 'NOT IN'
-		))
-	);
-
-	// backward compatibility WP < 3.5
-	if (version_compare($GLOBALS['wp_version'], '3.5' , '<')) {
-		unset($args['tax_query']['field']);
-		$args['tax_query']['terms'] = $lang->term_id;
-	}
-
-	return get_posts($args);
 }
