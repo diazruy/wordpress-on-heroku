@@ -142,7 +142,10 @@ do_action( 'password_protected_login_head' );
       <input type="password" name="password_protected_pwd" id="password_protected_pass" class="input" value="" size="20" tabindex="20" /></label>
     </p>
     <p>
-      <strong>This is NOT your personal account password, this is the general blog password</strong>
+      <strong>This is NOT your personal account password, this is the general blog password.</strong>
+    </p>
+    <p>
+      <strong>Este NO es tu contraseña personal, es la contraseña general del blog.</strong>
     </p>
     <!--
     <p class="forgetmenot"><label for="rememberme"><input name="rememberme" type="checkbox" id="rememberme" value="forever" tabindex="90"<?php checked( ! empty( $_POST['rememberme'] ) ); ?> /> <?php esc_attr_e( 'Remember Me', 'password-protected' ); ?></label></p>
