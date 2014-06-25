@@ -1,0 +1,74 @@
+Changelog Legend:
+----
+
+[+] = Added
+[*] = Changed
+[^] = Moved
+[=] = No Changes
+[x] = Deleted
+[!] = Bugs
+
+----
+(6/18/2014) - 1.0.8
+[+] Sanitization for all Customizer options
+[!] Allow transparent header background
+[*] Hide title, hide tagline and logo options moved into generate_settings db entry
+[!] Fix bug regarding deleting options in GeneratePress options page
+[*] Screenshot updated
+
+----
+
+(6/7/2014) - 1.0.7
+
+[*] Page header on single post moved within content
+[+] Single Post Layout setting added
+[+] Blog post content setting added - show full post or excerpt
+[+] Hook added after entry header
+
+----
+
+(5/30/2014) - 1.0.6
+
+[!] Fixed major bug causing Customizer options to disappear
+[+] Additional tags
+[+] More hooks
+
+----
+
+(5/23/2014) - 1.0.5
+[*] Theme defaults changed from global variable to function: generate_get_defaults()
+[+] Addons file added to add default styles and fonts when addons aren't installed
+[+] Added instruction on how to save and activate addon license keys
+[x] Featured image removed from attachment template
+[!] Remove page header container if no page header is set (removes unnecessary gap)
+
+----
+
+(5/20/2014) - 1.0.4
+[*] Readme.txt updated
+[*] Screenshot updated
+
+----
+
+(5/19/2014) - 1.0.3
+[x] Script options
+
+----
+
+(5/19/2014) - 1.0.2
+[+] Page header can be added using the Featured Image option
+[x] Activated message deleted
+[!] Fixed broken caption background URL in CSS
+[*] Bottom padding removed from last header widget
+[*] Screenshot updated
+
+----
+
+(5/16/2014) - 1.0.1
+[!] Fixed mobile menu when centered
+[*] Screenshot updated
+
+----
+
+(04/26/2014) - 1.0
+Initial Release
