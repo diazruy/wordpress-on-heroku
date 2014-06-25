@@ -1068,7 +1068,7 @@ span + .edit-link:before,
 
 .post-thumbnail {
   background: #b2b2b2 url(images/pattern-light.svg) repeat fixed;
-  display: block;
+  display: none;
   position: relative;
   width: 100%;
   z-index: 0;
