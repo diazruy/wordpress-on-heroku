@@ -1,0 +1,222 @@
+[
+    {
+        "name": "composer/installers",
+        "version": "v1.0.21",
+        "version_normalized": "1.0.21.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/composer/installers.git",
+            "reference": "d64e23fce42a4063d63262b19b8e7c0f3b5e4c45"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/composer/installers/zipball/d64e23fce42a4063d63262b19b8e7c0f3b5e4c45",
+            "reference": "d64e23fce42a4063d63262b19b8e7c0f3b5e4c45",
+            "shasum": ""
+        },
+        "replace": {
+            "roundcube/plugin-installer": "*",
+            "shama/baton": "*"
+        },
+        "require-dev": {
+            "composer/composer": "1.0.*@dev",
+            "phpunit/phpunit": "4.1.*"
+        },
+        "time": "2015-02-18 17:17:01",
+        "type": "composer-installer",
+        "extra": {
+            "class": "Composer\\Installers\\Installer",
+            "branch-alias": {
+                "dev-master": "1.0-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "Composer\\Installers\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Kyle Robinson Young",
+                "email": "kyle@dontkry.com",
+                "homepage": "https://github.com/shama"
+            }
+        ],
+        "description": "A multi-framework Composer library installer",
+        "homepage": "http://composer.github.com/installers/",
+        "keywords": [
+            "Craft",
+            "Dolibarr",
+            "Hurad",
+            "MODX Evo",
+            "OXID",
+            "SMF",
+            "Thelia",
+            "WolfCMS",
+            "agl",
+            "aimeos",
+            "annotatecms",
+            "bitrix",
+            "cakephp",
+            "chef",
+            "codeigniter",
+            "concrete5",
+            "croogo",
+            "dokuwiki",
+            "drupal",
+            "elgg",
+            "fuelphp",
+            "grav",
+            "installer",
+            "joomla",
+            "kohana",
+            "laravel",
+            "lithium",
+            "magento",
+            "mako",
+            "mediawiki",
+            "modulework",
+            "moodle",
+            "phpbb",
+            "piwik",
+            "ppi",
+            "puppet",
+            "roundcube",
+            "shopware",
+            "silverstripe",
+            "symfony",
+            "typo3",
+            "wordpress",
+            "zend",
+            "zikula"
+        ]
+    },
+    {
+        "name": "WordPress/WordPress",
+        "version": "3.9.1",
+        "version_normalized": "3.9.1.0",
+        "dist": {
+            "type": "zip",
+            "url": "https://github.com/WordPress/WordPress/archive/3.9.1.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "type": "library",
+        "installation-source": "dist"
+    },
+    {
+        "name": "wpackagist-plugin/wpro",
+        "version": "1.0",
+        "version_normalized": "1.0.0.0",
+        "source": {
+            "type": "svn",
+            "url": "http://plugins.svn.wordpress.org/wpro/",
+            "reference": "tags/1.0"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://downloads.wordpress.org/plugin/wpro.1.0.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "require": {
+            "composer/installers": "~1.0"
+        },
+        "type": "wordpress-plugin",
+        "installation-source": "dist",
+        "homepage": "https://wordpress.org/plugins/wpro/"
+    },
+    {
+        "name": "wpackagist-theme/generatepress",
+        "version": "1.0.9",
+        "version_normalized": "1.0.9.0",
+        "source": {
+            "type": "svn",
+            "url": "http://themes.svn.wordpress.org/generatepress/",
+            "reference": "1.0.9"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://downloads.wordpress.org/theme/generatepress.1.0.9.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "require": {
+            "composer/installers": "~1.0"
+        },
+        "type": "wordpress-theme",
+        "installation-source": "dist",
+        "homepage": "https://wordpress.org/themes/generatepress/"
+    },
+    {
+        "name": "wpackagist-theme/forefront",
+        "version": "0.5",
+        "version_normalized": "0.5.0.0",
+        "source": {
+            "type": "svn",
+            "url": "http://themes.svn.wordpress.org/forefront/",
+            "reference": "0.5"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://downloads.wordpress.org/theme/forefront.0.5.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "require": {
+            "composer/installers": "~1.0"
+        },
+        "type": "wordpress-theme",
+        "installation-source": "dist",
+        "homepage": "https://wordpress.org/themes/forefront/"
+    },
+    {
+        "name": "wpackagist-plugin/jetpack",
+        "version": "3.7.2",
+        "version_normalized": "3.7.2.0",
+        "source": {
+            "type": "svn",
+            "url": "http://plugins.svn.wordpress.org/jetpack/",
+            "reference": "tags/3.7.2"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://downloads.wordpress.org/plugin/jetpack.3.7.2.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "require": {
+            "composer/installers": "~1.0"
+        },
+        "type": "wordpress-plugin",
+        "installation-source": "dist",
+        "homepage": "https://wordpress.org/plugins/jetpack/"
+    },
+    {
+        "name": "wpackagist-plugin/sendgrid-email-delivery-simplified",
+        "version": "1.6.4",
+        "version_normalized": "1.6.4.0",
+        "source": {
+            "type": "svn",
+            "url": "http://plugins.svn.wordpress.org/sendgrid-email-delivery-simplified/",
+            "reference": "trunk"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://downloads.wordpress.org/plugin/sendgrid-email-delivery-simplified.zip",
+            "reference": null,
+            "shasum": null
+        },
+        "require": {
+            "composer/installers": "~1.0"
+        },
+        "type": "wordpress-plugin",
+        "installation-source": "dist",
+        "homepage": "https://wordpress.org/plugins/sendgrid-email-delivery-simplified/"
+    }
+]
