@@ -70,8 +70,8 @@ define('DB_COLLATE', ''                             );
 
 // Enable the next two lines when switching domains if after udpating DB it still
 // redirects to the wong place
-//define('WP_HOME','http://beta.koendiaz.com');
-//define('WP_SITEURL','http://beta.koendiaz.com');
+define('WP_HOME','http://www.koendiaz.com');
+define('WP_SITEURL','http://www.koendiaz.com');
 
 unset($_dbsettings);
 
