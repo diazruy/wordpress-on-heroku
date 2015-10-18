@@ -5,9 +5,16 @@
     "require": {
         "hhvm": "~3.2",
         "WordPress/WordPress": "~3",
+        "wpackagist-plugin/batcache": "1.2",
         "wpackagist-plugin/jetpack": "~3",
-        "wpackagist-plugin/wpro": "~1",
+        "wpackagist-plugin/memcachier": "1.0.1",
+        "wpackagist-plugin/password-protected": "1.7.2",
+        "wpackagist-plugin/polylang": "1.5.3",
+        "wpackagist-plugin/polylang-auto-translation": "0.2.1",
         "wpackagist-plugin/sendgrid-email-delivery-simplified": "~1",
+        "wpackagist-plugin/wordpress-https": "3.3.6",
+        "wpackagist-plugin/wp-email-login": "4.6.4",
+        "wpackagist-plugin/wpro": "~1",
         "wpackagist-theme/generatepress": "1.0.9",
         "wpackagist-theme/forefront": "0.5"
     },
