@@ -4,7 +4,7 @@
     "license": "MIT",
     "require": {
         "hhvm": "~3.2",
-        "WordPress/WordPress": "~3",
+        "WordPress/WordPress": "~4",
         "wpackagist-plugin/jetpack": "~3",
         "wpackagist-plugin/password-protected": "~2.0.1",
         "wpackagist-plugin/polylang": "1.7.11",
@@ -21,10 +21,10 @@
             "type": "package",
             "package": {
                 "name": "WordPress/WordPress",
-                "version": "3.9.1",
+                "version": "4.1",
                 "dist": {
                     "type": "zip",
-                    "url": "https://github.com/WordPress/WordPress/archive/3.9.1.zip"
+                    "url": "https://github.com/WordPress/WordPress/archive/4.1.zip"
                 }
             }
         },
