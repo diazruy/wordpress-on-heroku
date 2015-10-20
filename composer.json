@@ -5,7 +5,7 @@
     "require": {
         "hhvm": "~3.2",
         "WordPress/WordPress": "~3",
-        "wpackagist-plugin/jetpack": "~3",
+        "wpackagist-plugin/jetpack": "~2.9.3",
         "wpackagist-plugin/password-protected": "~2.0.1",
         "wpackagist-plugin/polylang": "1.7.11",
         "wpackagist-plugin/polylang-auto-translation": "0.2.1",
